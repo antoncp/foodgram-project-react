@@ -5,14 +5,22 @@ from .models import Recipe, Ingredient, Tag, RecipeIngredient
 
 class IngredientInline(admin.TabularInline):
     model = RecipeIngredient
+    fields = ('ingredient', 'amount', 'ingredient_display')
+    readonly_fields = ('ingredient_display',)
+
+    def ingredient_display(self, instance):
+        return f"({instance.ingredient.measurement_unit})"
+
+    ingredient_display.short_description = 'Measurement unit'
 
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('pk', 'name', 'author', 'text', 'cooking_time')
+    list_display_links = ('name',)
     search_fields = ('name',)
     list_filter = ('name',)
     empty_value_display = '-empty-'
-    inlines = [
+    inlines = [ 
         IngredientInline,
     ]
 
