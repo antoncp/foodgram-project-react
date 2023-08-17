@@ -1,7 +1,6 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 
-User = get_user_model()
+from users.models import User
 
 
 class Tag(models.Model):
@@ -39,7 +38,7 @@ class Ingredient(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.measurement_unit})"
     
 
 class Recipe(models.Model):
@@ -105,3 +104,61 @@ class RecipeIngredient(models.Model):
 
     def __str__(self):
         return f'{self.amount} of {self.ingredient} in {self.recipe}'
+
+
+class FavoriteRecipe(models.Model):
+    """Recipe db model class."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="Favorites",
+        verbose_name="User",
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="Users",
+        verbose_name="Recipe",
+    )
+
+    class Meta:
+        verbose_name = 'Favorite Recipe'
+        verbose_name_plural = 'Favorite Recipes'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "recipe"], name="already_favorite",
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user} like {self.recipe.name}'
+
+
+class CartRecipe(models.Model):
+    """Recipe db model class."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="ShoppingCart",
+        verbose_name="User",
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name="ShoppingCart",
+        verbose_name="Recipe",
+    )
+
+    class Meta:
+        verbose_name = 'Recipe in a shopping cart'
+        verbose_name_plural = 'Recipes in a shopping cart'
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "recipe"], name="already_in_the_cart",
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user} like {self.recipe.name}'
