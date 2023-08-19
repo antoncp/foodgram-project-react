@@ -39,7 +39,7 @@ class Ingredient(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.measurement_unit})"
-    
+
 
 class Recipe(models.Model):
     """Recipe db model class."""
@@ -89,13 +89,13 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name="Ingredients",
+        related_name="Amounts",
         verbose_name="Recipe",
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-        related_name="Recipes",
+        related_name="Amounts",
         verbose_name="Ingredient",
     )
     amount = models.PositiveSmallIntegerField(

@@ -1,26 +1,32 @@
 import random
 
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view 
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework import status
+from django_filters.rest_framework import DjangoFilterBackend
 
 from recipes.models import Recipe, Tag, Ingredient
 from api.serializers import RecipeSerializer, TagSerializer, IngredientSerializer
-from api.permissions import IsAdminOrReadOnly
+from api.permissions import IsAdminOrReadOnly, IsOwnerAdminModeratorOrReadOnly
+from api.filters import IngredientSearchFilter, RecipeFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """
     API endpoint
     """
-    http_method_names = ['get', 'post', 'patch']
+    http_method_names = ['get', 'post', 'patch', 'delete']
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly, IsOwnerAdminModeratorOrReadOnly)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+    def perform_update(self, serializer):
         serializer.save(author=self.request.user)
 
 
@@ -44,6 +50,8 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
+    filter_backends = (IngredientSearchFilter,)
+    search_fields = ('^name',)
 
 
 @api_view(['GET'])
