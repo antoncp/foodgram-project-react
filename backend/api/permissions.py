@@ -20,7 +20,7 @@ class IsAdminOrReadOnly(BasePermission):
         )
 
 
-class IsOwnerAdminModeratorOrReadOnly(BasePermission):
+class IsOwnerAdminOrReadOnly(BasePermission):
     """
     Must be superuser or administrator or author of the instance
     to edit or delate objects. Other users could only read.
@@ -30,6 +30,5 @@ class IsOwnerAdminModeratorOrReadOnly(BasePermission):
         return (
             request.method in SAFE_METHODS
             or request.user == obj.author
-            or request.user.is_admin
-            or request.user.is_superuser
+            or request.user == obj.user
         )

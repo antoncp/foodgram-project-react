@@ -74,8 +74,12 @@ class Recipe(models.Model):
         Ingredient,
         through="RecipeIngredient"
     )
+    pub_date = models.DateTimeField(
+        auto_now_add=True, verbose_name="Date created"
+    )
 
     class Meta:
+        ordering = ['-pub_date']
         verbose_name = 'Recipe'
         verbose_name_plural = 'Recipes'
 
