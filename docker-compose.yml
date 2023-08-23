@@ -1,0 +1,26 @@
+version: '3'
+
+services:
+  backend:
+    build: ./backend/
+    env_file: ./backend/.env
+    volumes:
+      - ./backend/foodgram_static:/foodgram_static/
+      - ./backend/media:/media/
+      - /home/antoncp/Dev/foodgram-project-react/backend:/app
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend/:/app/result_build/
+  nginx:
+    image: nginx:1.19.3
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/templates/default.conf.template
+      - ./frontend/build:/usr/share/nginx/html/
+      - ./docs/:/usr/share/nginx/html/api/docs/
+      - ./backend/foodgram_static:/foodgram_static/
+      - ./backend/media:/media/

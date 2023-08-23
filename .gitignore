@@ -132,8 +132,11 @@ dmypy.json
 .idea
 
 # папки со статикой и медиа
-media/
+/backend/media/
 migrations/
 **/migrations/**
 !**/migrations
 !**/migrations/__init__.py
+backend/collected_static
+backend/foodgram_static
+.vscode
