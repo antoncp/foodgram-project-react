@@ -1,17 +1,17 @@
-from rest_framework import filters
 from django_filters import rest_framework as filter
-
 from recipes.models import Recipe
+from rest_framework import filters
 
 
 class RecipeFilter(filter.FilterSet):
-    tags = filter.CharFilter(field_name='tags__slug', lookup_expr='iexact')
-    is_favorited = filter.BooleanFilter(method='filter_favorited')
-    is_in_shopping_cart = filter.BooleanFilter(method='filter_shopping_cart')
+    """Custom filter for recipes endpoint."""
+    tags = filter.CharFilter(field_name="tags__slug", lookup_expr="iexact")
+    is_favorited = filter.BooleanFilter(method="filter_favorited")
+    is_in_shopping_cart = filter.BooleanFilter(method="filter_shopping_cart")
 
     class Meta:
         model = Recipe
-        fields = ['author', 'tags', 'is_favorited']
+        fields = ["author", "tags", "is_favorited"]
 
     def filter_favorited(self, queryset, name, value):
         if value:
@@ -25,4 +25,5 @@ class RecipeFilter(filter.FilterSet):
 
 
 class IngredientSearchFilter(filters.SearchFilter):
+    """Custom search filter for ingredients."""
     search_param = "name"
