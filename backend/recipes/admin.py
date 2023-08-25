@@ -18,7 +18,7 @@ class IngredientInline(admin.TabularInline):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ("pk", "name", "author")
+    list_display = ("pk", "name", "author", "in_favorites_times")
     list_display_links = ("name",)
     search_fields = ("name",)
     list_filter = ("author", "name", "tags")
@@ -26,6 +26,9 @@ class RecipeAdmin(admin.ModelAdmin):
     inlines = [
         IngredientInline,
     ]
+
+    def in_favorites_times(self, obj):
+        return f"{obj.Users.all().count()} users like this"
 
 
 class IngredientAdmin(admin.ModelAdmin):

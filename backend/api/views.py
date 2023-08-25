@@ -4,15 +4,14 @@ from api.filters import IngredientSearchFilter, RecipeFilter
 from api.paginator import RecipesPagination
 from api.permissions import IsAdminOrReadOnly, IsOwnerAdminOrReadOnly
 from api.serializers import (CartRecipeSerializer, FavoriteRecipeSerializer,
-                             IngredientSerializer, RecipeSerializer,
-                             TagSerializer, FollowSerializer)
+                             FollowSerializer, IngredientSerializer,
+                             RecipeSerializer, TagSerializer)
 from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import (CartRecipe, FavoriteRecipe, Ingredient, Recipe,
                             RecipeIngredient, Tag)
-from users.models import Follow
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
@@ -21,6 +20,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
+from users.models import Follow, User
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -158,10 +158,34 @@ class IngredientViewSet(viewsets.ModelViewSet):
 class FollowViewSet(viewsets.ModelViewSet):
     """Follow API endpoint."""
 
-    http_method_names = ["get"]
+    http_method_names = ["get", "post", "delete"]
     serializer_class = FollowSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = RecipesPagination
+
+    def _get_author(self):
+        author_id = self.kwargs.get("user_id")
+        return get_object_or_404(User, id=author_id)
 
     def get_queryset(self):
         user = self.request.user
-        return user.following.all()
+        return user.follower.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        author = self._get_author()
+        if serializer.is_valid():
+            serializer.save(user=self.request.user, author=author)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(
+                serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        author = self._get_author()
+        model_obj = get_object_or_404(
+            Follow, user=self.request.user, author=author
+        )
+        model_obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

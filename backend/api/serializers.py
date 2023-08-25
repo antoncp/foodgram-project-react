@@ -1,8 +1,16 @@
 import base64
 
 from django.core.files.base import ContentFile
-from recipes.models import (CartRecipe, FavoriteRecipe, Ingredient, Recipe,
-                            RecipeIngredient, Tag, User)
+from django.core.validators import EmailValidator, RegexValidator
+from recipes.models import (
+    CartRecipe,
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    Tag,
+)
+from users.models import User, Follow
 from rest_framework import serializers
 
 
@@ -49,7 +57,7 @@ class CartFavoriteRecipeSerializer(serializers.ModelSerializer):
     )
 
     def validate(self, data):
-        """Validate that"""
+        """Validates that new record is not already exist."""
         request = self.context["request"]
         user = request.user
         recipe_id = self.context["view"].kwargs.get("pk")
@@ -60,7 +68,7 @@ class CartFavoriteRecipeSerializer(serializers.ModelSerializer):
             ).exists()
         ):
             raise serializers.ValidationError(
-                "This recipe already in your favorite list"
+                "This recipe is already in your list/cart"
             )
         return data
 
@@ -96,10 +104,18 @@ class Base64ImageField(serializers.ImageField):
         return super().to_internal_value(data)
 
 
+class SmallRecipeSerializer(serializers.ModelSerializer):
+    """Small Recipe model serializer for other serializers."""
+
+    class Meta:
+        model = Recipe
+        fields = ("id", "name", "image", "cooking_time")
+
+
 class UserSerializer(serializers.ModelSerializer):
     """Custom user model serializer."""
 
-    is_subscribed = serializers.BooleanField(default="false")
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -112,6 +128,17 @@ class UserSerializer(serializers.ModelSerializer):
             "is_subscribed",
         )
 
+    def get_is_subscribed(self, obj):
+        request = self.context["request"]
+        author = obj.id
+        user = request.user
+        if (
+            user.is_authenticated
+            and Follow.objects.filter(user=user, author=author).exists()
+        ):
+            return True
+        return False
+
 
 class CreateUserSerializer(serializers.ModelSerializer):
     """Create custom user serializer."""
@@ -119,6 +146,121 @@ class CreateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("email", "username", "first_name", "last_name", "password")
+
+    def validate_email(self, value):
+        if not EmailValidator(value):
+            raise serializers.ValidationError(
+                detail={
+                    "email": "Provide the correct email"
+                }
+            )
+        return value
+
+    def validate_username(self, value):
+        validate_re = RegexValidator(r"^[\w.@+-]+\Z", 'Letters, digits and @/./+/-/_ only')
+        validate_re(value)
+        return value
+
+    def validate_first_name(self, value):
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                detail={
+                    "first_name": "Name should be shorter than 150 letters"
+                }
+            )
+        return value
+
+    def validate_last_name(self, value):
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                detail={
+                    "last_name": "Last name should be shorter than 150 letters"
+                }
+            )
+        return value
+
+    def validate_password(self, value):
+        if len(value) > 150:
+            raise serializers.ValidationError(
+                detail={
+                    "password": "Password should be shorter than 150 letters"
+                }
+            )
+        return value
+
+
+class FollowSerializer(UserSerializer):
+    """Follow model serializer."""
+
+    id = serializers.PrimaryKeyRelatedField(source="author.id", read_only=True)
+    email = serializers.CharField(source="author.email", read_only=True)
+    username = serializers.CharField(source="author.username", read_only=True)
+    first_name = serializers.CharField(
+        source="author.first_name", read_only=True
+    )
+    last_name = serializers.CharField(
+        source="author.last_name", read_only=True
+    )
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Follow
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+            "recipes",
+            "recipes_count",
+        )
+
+    def get_recipes(self, obj):
+        limit_size = self.context["request"].query_params.get("recipes_limit")
+        if limit_size:
+            recipes = Recipe.objects.filter(author=obj.author)[
+                : int(limit_size)
+            ]
+        else:
+            recipes = Recipe.objects.filter(author=obj.author)
+        return SmallRecipeSerializer(recipes, many=True).data
+
+    def get_is_subscribed(self, obj):
+        request = self.context["request"]
+        author = obj.author
+        user = request.user
+        if (
+            user.is_authenticated
+            and Follow.objects.filter(user=user, author=author).exists()
+        ):
+            return True
+        return False
+
+    def get_recipes_count(self, obj):
+        return Recipe.objects.filter(author=obj.author).count()
+
+    def validate(self, data):
+        """Validates that new record is not already exist."""
+        request = self.context["request"]
+        user = request.user
+        author_id = self.context["view"].kwargs.get("user_id")
+        if (
+            request.method == "POST"
+            and self.Meta.model.objects.filter(
+                user=user, author=author_id
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                "This author is already in subscription list"
+            )
+        if user.id == int(author_id):
+            raise serializers.ValidationError(
+                "You can not subscribe to yourself"
+            )
+        return data
 
 
 class RecipeSerializer(serializers.ModelSerializer):
