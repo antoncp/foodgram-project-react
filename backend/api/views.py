@@ -2,7 +2,7 @@ import io
 
 from api.filters import IngredientSearchFilter, RecipeFilter
 from api.paginator import RecipesPagination
-from api.permissions import IsAdminOrReadOnly, IsOwnerAdminOrReadOnly
+from api.permissions import IsOwnerAdminOrReadOnly
 from api.serializers import (CartRecipeSerializer, FavoriteRecipeSerializer,
                              FollowSerializer, IngredientSerializer,
                              RecipeSerializer, TagSerializer)
@@ -15,10 +15,9 @@ from recipes.models import (CartRecipe, FavoriteRecipe, Ingredient, Recipe,
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from rest_framework import permissions, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from users.models import Follow, User
 
@@ -29,7 +28,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch", "delete"]
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = (IsAdminOrReadOnly, IsOwnerAdminOrReadOnly)
+    permission_classes = (IsOwnerAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = RecipesPagination
@@ -44,6 +43,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["post"],
         serializer_class=FavoriteRecipeSerializer,
+        permission_classes=[IsAuthenticated],
     )
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
@@ -65,7 +65,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        detail=True, methods=["post"], serializer_class=CartRecipeSerializer
+        detail=True, methods=["post"],
+        serializer_class=CartRecipeSerializer,
+        permission_classes=[IsAuthenticated],
     )
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
@@ -139,7 +141,7 @@ class TagViewSet(viewsets.ModelViewSet):
     http_method_names = ["get"]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     pagination_class = None
 
 
@@ -149,7 +151,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
     http_method_names = ["get"]
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     pagination_class = None
     filter_backends = (IngredientSearchFilter,)
     search_fields = ("^name",)
