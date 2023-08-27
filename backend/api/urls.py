@@ -1,25 +1,27 @@
 from django.urls import include, path
 from rest_framework import routers
-from api.views import RecipeViewSet, TagViewSet, IngredientViewSet, FollowViewSet
 
-app_name = 'api'
+from api.views import (FollowViewSet, IngredientViewSet, RecipeViewSet,
+                       TagViewSet)
+
+app_name = "api"
 
 router_v1 = routers.DefaultRouter()
-router_v1.register(r'recipes', RecipeViewSet)
-router_v1.register(r'tags', TagViewSet)
-router_v1.register(r'ingredients', IngredientViewSet)
-router_v1.register(r'users/subscriptions', FollowViewSet, basename='following')
+router_v1.register(r"recipes", RecipeViewSet)
+router_v1.register(r"tags", TagViewSet)
+router_v1.register(r"ingredients", IngredientViewSet)
+router_v1.register(r"users/subscriptions", FollowViewSet, basename="following")
 
-category_detail = FollowViewSet.as_view({
-    'post': 'create',
-    'delete': 'destroy',
-})
+category_detail = FollowViewSet.as_view(
+    {
+        "post": "create",
+        "delete": "destroy",
+    }
+)
 
 urlpatterns = [
     path(
-        'users/<int:user_id>/subscribe/',
-        category_detail,
-        name='subscriptions'
+        "users/<int:user_id>/subscribe/", category_detail, name="subscriptions"
     ),
-    path('', include(router_v1.urls)),
+    path("", include(router_v1.urls)),
 ]

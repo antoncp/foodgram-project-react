@@ -5,7 +5,7 @@
 сайт: https://antoncp.hopto.org/
 IP: 158.160.21.122
 
-Суперпользователь:
+Суперпользователь (с доступом в админку):
 email: admin@gmail.com
 username: admin
 password: adminpas57

@@ -2,6 +2,8 @@ import base64
 
 from django.core.files.base import ContentFile
 from django.core.validators import EmailValidator, RegexValidator
+from rest_framework import serializers
+
 from recipes.models import (
     CartRecipe,
     FavoriteRecipe,
@@ -11,7 +13,6 @@ from recipes.models import (
     Tag,
 )
 from users.models import User, Follow
-from rest_framework import serializers
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -150,14 +151,14 @@ class CreateUserSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         if not EmailValidator(value):
             raise serializers.ValidationError(
-                detail={
-                    "email": "Provide the correct email"
-                }
+                detail={"email": "Provide the correct email"}
             )
         return value
 
     def validate_username(self, value):
-        validate_re = RegexValidator(r"^[\w.@+-]+\Z", 'Letters, digits and @/./+/-/_ only')
+        validate_re = RegexValidator(
+            r"^[\w.@+-]+\Z", "Letters, digits and @/./+/-/_ only"
+        )
         validate_re(value)
         return value
 
@@ -190,12 +191,12 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = User(
-            email=validated_data['email'],
-            username=validated_data['username'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
+            email=validated_data["email"],
+            username=validated_data["username"],
+            first_name=validated_data["first_name"],
+            last_name=validated_data["last_name"],
         )
-        user.set_password(validated_data['password'])
+        user.set_password(validated_data["password"])
         user.save()
         return user
 

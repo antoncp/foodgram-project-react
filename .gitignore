@@ -133,10 +133,6 @@ dmypy.json
 
 # папки со статикой и медиа
 /backend/media/
-migrations/
-**/migrations/**
-!**/migrations
-!**/migrations/__init__.py
 backend/collected_static
 backend/foodgram_static
 .vscode

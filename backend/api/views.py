@@ -1,24 +1,25 @@
 import io
 
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from django.db.models import Sum
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+
 from api.filters import IngredientSearchFilter, RecipeFilter
 from api.paginator import RecipesPagination
 from api.permissions import IsOwnerAdminOrReadOnly
 from api.serializers import (CartRecipeSerializer, FavoriteRecipeSerializer,
                              FollowSerializer, IngredientSerializer,
                              RecipeSerializer, TagSerializer)
-from django.db.models import Sum
-from django.http import FileResponse
-from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import (CartRecipe, FavoriteRecipe, Ingredient, Recipe,
                             RecipeIngredient, Tag)
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
 from users.models import Follow, User
 
 
@@ -65,7 +66,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
-        detail=True, methods=["post"],
+        detail=True,
+        methods=["post"],
         serializer_class=CartRecipeSerializer,
         permission_classes=[IsAuthenticated],
     )

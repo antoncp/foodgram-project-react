@@ -3,7 +3,7 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class IsOwnerAdminOrReadOnly(BasePermission):
     """
-    Must be author of the instance
+    Must be author of the instance or admin
     to edit or delate objects. Other users could only read.
     """
 
