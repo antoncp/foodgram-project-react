@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'djoser',
+    'colorfield',
 ]
 
 MIDDLEWARE = [
@@ -140,3 +141,6 @@ DJOSER = {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly']
     },
 }
+
+LIMIT_STRINGS = 150
+LIMIT_RECIPE_NAME = 200

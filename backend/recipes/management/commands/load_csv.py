@@ -8,8 +8,20 @@ class Command(BaseCommand):
     help = "Loads data from .csv files to the DB"
 
     def add_arguments(self, parser):
-        parser.add_argument("path")
-        parser.add_argument("model")
+        parser.add_argument(
+            "path",
+            nargs="?",
+            type=str,
+            help="Path to the .csv file",
+            default="foodgram_static/ingredients.csv",
+        )
+        parser.add_argument(
+            "model",
+            nargs="?",
+            type=str,
+            help="Name of the model to data insert",
+            default="Ingredient",
+        )
 
     def handle(self, *args, **options):
         path = options.get("path")

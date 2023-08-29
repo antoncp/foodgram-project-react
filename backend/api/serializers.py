@@ -1,5 +1,6 @@
 import base64
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.validators import EmailValidator, RegexValidator
 from rest_framework import serializers
@@ -133,12 +134,10 @@ class UserSerializer(serializers.ModelSerializer):
         request = self.context["request"]
         author = obj.id
         user = request.user
-        if (
+        return (
             user.is_authenticated
             and Follow.objects.filter(user=user, author=author).exists()
-        ):
-            return True
-        return False
+        )
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -163,7 +162,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_first_name(self, value):
-        if len(value) > 150:
+        if len(value) > settings.LIMIT_STRINGS:
             raise serializers.ValidationError(
                 detail={
                     "first_name": "Name should be shorter than 150 letters"
@@ -172,7 +171,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_last_name(self, value):
-        if len(value) > 150:
+        if len(value) > settings.LIMIT_STRINGS:
             raise serializers.ValidationError(
                 detail={
                     "last_name": "Last name should be shorter than 150 letters"
@@ -181,7 +180,7 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return value
 
     def validate_password(self, value):
-        if len(value) > 150:
+        if len(value) > settings.LIMIT_STRINGS:
             raise serializers.ValidationError(
                 detail={
                     "password": "Password should be shorter than 150 letters"
@@ -232,7 +231,7 @@ class FollowSerializer(UserSerializer):
 
     def get_recipes(self, obj):
         limit_size = self.context["request"].query_params.get("recipes_limit")
-        if limit_size:
+        if limit_size.isdigit():
             recipes = Recipe.objects.filter(author=obj.author)[
                 : int(limit_size)
             ]
@@ -244,12 +243,10 @@ class FollowSerializer(UserSerializer):
         request = self.context["request"]
         author = obj.author
         user = request.user
-        if (
+        return (
             user.is_authenticated
             and Follow.objects.filter(user=user, author=author).exists()
-        ):
-            return True
-        return False
+        )
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj.author).count()
@@ -313,27 +310,26 @@ class RecipeSerializer(serializers.ModelSerializer):
         request = self.context["request"]
         recipe = obj.id
         user = request.user
-        if (
+        return (
             user.is_authenticated
             and FavoriteRecipe.objects.filter(
                 user=user, recipe=recipe
             ).exists()
-        ):
-            return True
-        return False
+        )
 
     def get_is_in_shopping_cart(self, obj):
         request = self.context["request"]
         recipe = obj.id
         user = request.user
-        if (
+        return (
             user.is_authenticated
             and CartRecipe.objects.filter(user=user, recipe=recipe).exists()
-        ):
-            return True
-        return False
+        )
 
     def create(self, validated_data):
+        """Creates a new recipe instance, all validation in the separate
+        validate method (line 362).
+        """
         tags_data = self.initial_data.get("tags", [])
         ingredients_data = self.initial_data.get("ingredients", [])
         recipe = Recipe.objects.create(**validated_data)
@@ -363,16 +359,50 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         return instance
 
-    def validate_name(self, value):
-        if len(value) > 200:
+    def validate(self, data):
+        """Validates all data in the recipe"""
+        tags = self.initial_data.get("tags", [])
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError(
+                detail={"tags": "The tags in one recipe should be unique"}
+            )
+        for tag in tags:
+            if not Tag.objects.filter(id=tag).exists():
+                raise serializers.ValidationError(
+                    detail={"tags": f"Tag with ID: {tag} does not exist"}
+                )
+
+        ingredients = self.initial_data.get("ingredients", [])
+        ingredients_in_recipe = []
+        for ingredient in ingredients:
+            ingredient_id = ingredient.get("id")
+            amount = ingredient.get("amount")
+            if ingredient_id in ingredients_in_recipe:
+                raise serializers.ValidationError(
+                    detail={"ingredient": "Repeating ingredient"}
+                )
+            ingredients_in_recipe.append(ingredient_id)
+            if int(amount) < 1:
+                raise serializers.ValidationError(
+                    detail={"amount": "Should be 1 or more"}
+                )
+            if not Ingredient.objects.filter(id=ingredient_id).exists():
+                raise serializers.ValidationError(
+                    detail={
+                        "ingredient": (f"Ingredient with ID: "
+                                       f"{ingredient_id} does not exist")
+                    }
+                )
+
+        name = data["name"]
+        if len(name) > settings.LIMIT_RECIPE_NAME:
             raise serializers.ValidationError(
                 detail={"name": "Name should be shorter than 200 letters"}
             )
-        return value
 
-    def validate_cooking_time(self, value):
-        if int(value) <= 0:
+        cooking_time = data["cooking_time"]
+        if int(cooking_time) <= 0:
             raise serializers.ValidationError(
                 detail={"cooking_time": "Cooking time should be more than 0"}
             )
-        return value
+        return data

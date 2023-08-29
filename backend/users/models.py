@@ -1,6 +1,7 @@
-from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
@@ -16,7 +17,7 @@ class User(AbstractUser):
 
     username = models.CharField(
         _("username"),
-        max_length=150,
+        max_length=settings.LIMIT_STRINGS,
         unique=True,
         help_text=_(
             "Required. 150 characters or fewer. Letters, digits and "
@@ -37,19 +38,25 @@ class User(AbstractUser):
             "unique": _("A user with that username already exists."),
         },
     )
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=settings.LIMIT_STRINGS)
+    last_name = models.CharField(max_length=settings.LIMIT_STRINGS)
     email = models.EmailField(
         verbose_name="Email",
         unique=True,
         max_length=254,
     )
-    password = models.CharField(max_length=150)
+    password = models.CharField(max_length=settings.LIMIT_STRINGS)
     role = models.CharField(
         default=UserRoles.USER,
         choices=UserRoles.choices,
         max_length=12,
     )
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ['username']
+
+    def get_username(self):
+        return self.email
 
     class Meta:
         verbose_name = "User"

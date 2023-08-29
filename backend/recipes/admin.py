@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from users.models import Follow, User
 from .models import (CartRecipe, FavoriteRecipe, Ingredient, Recipe,
                      RecipeIngredient, Tag)
 
@@ -45,19 +44,6 @@ class TagAdmin(admin.ModelAdmin):
     empty_value_display = "None"
 
 
-class UserAdmin(admin.ModelAdmin):
-    list_display = (
-        "pk",
-        "username",
-        "first_name",
-        "last_name",
-        "email",
-        "role",
-    )
-    list_display_links = ("username",)
-    list_filter = ("email", "first_name")
-
-
 class FavoriteRecipeAdmin(admin.ModelAdmin):
     list_display = ("pk", "user", "recipe")
     search_fields = ("recipe",)
@@ -72,17 +58,8 @@ class CartRecipeAdmin(admin.ModelAdmin):
     empty_value_display = "None"
 
 
-class FollowAdmin(admin.ModelAdmin):
-    list_display = ("pk", "user", "author")
-    search_fields = ("author",)
-    list_filter = ("author",)
-    empty_value_display = "None"
-
-
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, TagAdmin)
-admin.site.register(User, UserAdmin)
 admin.site.register(FavoriteRecipe, FavoriteRecipeAdmin)
 admin.site.register(CartRecipe, CartRecipeAdmin)
-admin.site.register(Follow, FollowAdmin)

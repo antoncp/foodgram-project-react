@@ -12,5 +12,4 @@ class IsOwnerAdminOrReadOnly(BasePermission):
             request.method in SAFE_METHODS
             or request.user == obj.author
             or request.user.is_admin
-            or request.user.is_superuser
         )
