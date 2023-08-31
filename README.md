@@ -1,20 +1,4 @@
 # Foodgram
-```
-Реквизиты для проверки развернутой на сервере работы:
-
-сайт: https://antoncp.hopto.org/
-IP: 158.160.21.122
-
-Суперпользователь (с доступом в админку):
-email: admin@gmail.com
-username: admin
-password: adminpas57
-
-Еще один тестовый пользователь:
-email: antoncp@gmail.com
-username: antoncp
-password: testpas57 
-``` 
 ### Description
 What happens when you cross Instagram and your love of food - you get Foodgram. Here you can share photos and descriptions of your favorite recipes, check out others, subscribe to talented chefs and follow their suggestions. Over 2000 ingredients for a wide variety of dishes are already listed in our database.  
 
